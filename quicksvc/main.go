@@ -22,22 +22,30 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var programArgs []string
 			if cmd.ArgsLenAtDash() < 0 {
-				return errors.New("dash (--) must be present on the argument list")
+				return errors.New("two dashes (--) must be present on the argument list")
 			}
 			cmdArgs := args[:cmd.ArgsLenAtDash()]
-			programArgs = args[cmd.ArgsLenAtDash():]
-
-			if len(programArgs) == 0 {
-				return errors.New("program name is required")
+			if len(cmdArgs) == 0 {
+				return errors.New("quicksvc does not support any arguments before the dashes (--)")
 			}
+
+			programArgs = args[cmd.ArgsLenAtDash():]
+			if len(programArgs) == 0 {
+				return errors.New("the program name is required")
+			}
+
 			program := lo.Must(filepath.Abs(programArgs[0]))
 			programArgs = programArgs[1:]
 
-			log.Println("CMD args:", cmdArgs)
+			log.Println("Service Name:", flagName)
 			log.Println("Program:", program)
 			log.Println("Program args:", programArgs)
 
-			createPkgbuild(flagName, program, programArgs...)
+			createPkgbuild(Options{
+				ServiceName:       flagName,
+				SourceProgramPath: program,
+				ProgramArgs:       programArgs,
+			})
 			return nil
 		},
 	}
@@ -48,23 +56,29 @@ func main() {
 //go:embed templates/*.tmpl
 var templatesFs embed.FS
 
-func createPkgbuild(name, sourceProgramPath string, args ...string) {
-	sourceProgramPath = try(filepath.Abs(sourceProgramPath)).
+type Options struct {
+	ServiceName       string
+	SourceProgramPath string
+	ProgramArgs       []string
+}
+
+func createPkgbuild(o Options) {
+	o.SourceProgramPath = try(filepath.Abs(o.SourceProgramPath)).
 		withMessage("failed to get absolute path to program").
 		must()
 
-	packageName := filepath.Base(sourceProgramPath)
-	if name == "" {
-		packageName = fmt.Sprintf("quicksvc-%s", name)
+	baseName := filepath.Base(o.SourceProgramPath)
+	if o.ServiceName == "" {
+		o.ServiceName = fmt.Sprintf("quicksvc-%s")
 	}
-	programPath := filepath.Join("/usr", "bin", packageName)
+	programPath := filepath.Join("/usr", "bin", o.ServiceName)
 
 	tempdir := try(os.MkdirTemp("", "quicksvc-*")).
 		withMessage("failed to create temporary directory").
 		must()
 	defer os.RemoveAll(tempdir)
 
-	svcPath := filepath.Join(tempdir, packageName+".service")
+	svcPath := filepath.Join(tempdir, o.ServiceName+".service")
 	svcFile := try(os.OpenFile(svcPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)).
 		withMessage("failed to create service file").
 		must()
@@ -79,11 +93,11 @@ func createPkgbuild(name, sourceProgramPath string, args ...string) {
 
 	tmpl := must(template.ParseFS(templatesFs, "templates/*.tmpl"))
 	templateData := map[string]any{
-		"ServiceDescription": fmt.Sprintf("%s service", packageName),
-		"PackageName":        packageName,
-		"SourceProgramPath":  sourceProgramPath,
+		"ServiceDescription": fmt.Sprintf("[quicksvc] %s", baseName),
+		"ServiceName":        o.ServiceName,
+		"SourceProgramPath":  o.SourceProgramPath,
 		"ProgramPath":        programPath,
-		"ProgramArgs":        strings.Join(args, " "),
+		"ProgramArgs":        strings.Join(o.ProgramArgs, " "),
 	}
 	must0(tmpl.ExecuteTemplate(svcFile, "service.tmpl", templateData))
 	must0(tmpl.ExecuteTemplate(pkgbuildFile, "PKGBUILD.bin.tmpl", templateData))
