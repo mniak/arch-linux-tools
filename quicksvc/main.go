@@ -54,7 +54,7 @@ func createPkgbuild(name, sourceProgramPath string, args ...string) {
 		must()
 
 	packageName := filepath.Base(sourceProgramPath)
-	if name != "" {
+	if name == "" {
 		packageName = fmt.Sprintf("quicksvc-%s", name)
 	}
 	programPath := filepath.Join("/usr", "bin", packageName)
