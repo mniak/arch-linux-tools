@@ -52,18 +52,19 @@ func createPkgbuild(name, sourceProgramPath string, args ...string) {
 	sourceProgramPath = try(filepath.Abs(sourceProgramPath)).
 		withMessage("failed to get absolute path to program").
 		must()
-	baseName := filepath.Base(sourceProgramPath)
+
+	packageName := filepath.Base(sourceProgramPath)
 	if name != "" {
-		baseName = name
+		packageName = fmt.Sprintf("quicksvc-%s", name)
 	}
-	programPath := filepath.Join("/usr", "bin", baseName)
+	programPath := filepath.Join("/usr", "bin", packageName)
 
 	tempdir := try(os.MkdirTemp("", "quicksvc-*")).
 		withMessage("failed to create temporary directory").
 		must()
 	defer os.RemoveAll(tempdir)
 
-	svcPath := filepath.Join(tempdir, baseName+".service")
+	svcPath := filepath.Join(tempdir, packageName+".service")
 	svcFile := try(os.OpenFile(svcPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)).
 		withMessage("failed to create service file").
 		must()
@@ -78,8 +79,8 @@ func createPkgbuild(name, sourceProgramPath string, args ...string) {
 
 	tmpl := must(template.ParseFS(templatesFs, "templates/*.tmpl"))
 	templateData := map[string]any{
-		"ServiceDescription": fmt.Sprintf("%s service", baseName),
-		"PackageName":        baseName,
+		"ServiceDescription": fmt.Sprintf("%s service", packageName),
+		"PackageName":        packageName,
 		"SourceProgramPath":  sourceProgramPath,
 		"ProgramPath":        programPath,
 		"ProgramArgs":        strings.Join(args, " "),
