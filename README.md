@@ -7,7 +7,7 @@ Quickly create a service from a command line.
 
 
 ```bash
-go install github.com/mniak/arch-linux-tools/quicksvc@v0.0.1
+go install github.com/mniak/arch-linux-tools/quicksvc@v0.0.2
 ```
 
 ```bash
