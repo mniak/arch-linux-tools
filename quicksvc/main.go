@@ -25,7 +25,7 @@ func main() {
 				return errors.New("two dashes (--) must be present on the argument list")
 			}
 			cmdArgs := args[:cmd.ArgsLenAtDash()]
-			if len(cmdArgs) == 0 {
+			if len(cmdArgs) >= 0 {
 				return errors.New("quicksvc does not support any arguments before the dashes (--)")
 			}
 
