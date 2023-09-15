@@ -69,7 +69,7 @@ func createPkgbuild(o Options) {
 
 	baseName := filepath.Base(o.SourceProgramPath)
 	if o.ServiceName == "" {
-		o.ServiceName = fmt.Sprintf("quicksvc-%s")
+		o.ServiceName = fmt.Sprintf("quicksvc-%s", baseName)
 	}
 	programPath := filepath.Join("/usr", "bin", o.ServiceName)
 
