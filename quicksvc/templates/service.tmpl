@@ -1,0 +1,6 @@
+[Unit]
+Description={{ .ServiceDescription }}
+
+[Service]
+Type=simple
+ExecStart={{ .ProgramPath }} {{ .ProgramArgs }}
