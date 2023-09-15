@@ -4,3 +4,6 @@ Description=[quicksvc] {{ .ServiceDescription }}
 [Service]
 Type=simple
 ExecStart={{ .ProgramPath }} {{ .ProgramArgs }}
+
+[Install]
+WantedBy=multi-user.target
