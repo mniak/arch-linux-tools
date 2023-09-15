@@ -13,9 +13,4 @@ prepare() {
 package() {
   install -Dm755 "$srcdir/$pkgname" "$pkgdir/{{ .ProgramPath }}"
   install -Dm644 "$srcdir/$pkgname.service" "$pkgdir/usr/lib/systemd/system/$pkgname.service"
-
-  cd $pkgdir
-  echo SHOWING DIR
-  tree -p
-  ls -l $pkgdir/usr/bin
 }
